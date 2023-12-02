@@ -74,6 +74,19 @@ class Letor:
 
     def vector_rep(self, text, lsi_model):
         rep = [topic_value for (_, topic_value) in lsi_model[self.dictionary.doc2bow(text)]]
+        print("=====================================" * 2)
+        print(f"REP : {rep}")
+        return rep if len(rep) == self.NUM_LATENT_TOPICS else [0.] * self.NUM_LATENT_TOPICS
+
+    def create_tf_idf_model(self):
+        bow_corpus = [self.dictionary.doc2bow(doc, allow_update=True) for doc in self.documents.values()]
+        model = TfidfModel(bow_corpus)
+        self.model = model
+
+    def vector_rep_tf_idf(self, text, tf_idf_model):
+        rep = [topic_value for (_, topic_value) in tf_idf_model[self.dictionary.doc2bow(text)]]
+        # print("=====================================" * 2)
+        # print(f"REP : {rep}")
         return rep if len(rep) == self.NUM_LATENT_TOPICS else [0.] * self.NUM_LATENT_TOPICS
 
     def create_w2v_model(self):
@@ -83,18 +96,31 @@ class Letor:
 
     def vector_rep_w2v(self, text, w2v_model):
         rep = [w2v_model.wv[word] for word in text if word in w2v_model.wv]
-        return np.mean(rep, axis=0) if rep else np.zeros(self.NUM_LATENT_TOPICS)
+        # print("=====================================" * 2)
+        # print(f"REP : {rep}")
+
+        return np.array(rep).flatten()
 
     def features(self, query, doc, model):
-        v_q = self.vector_rep_w2v(query, model)
-        v_d = self.vector_rep_w2v(doc, model)
+        # v_q = self.vector_rep(query, model)
+        # v_d = self.vector_rep(doc, model)
+        # v_q = self.vector_rep_w2v(query, model)
+        # v_d = self.vector_rep_w2v(doc, model)
+        v_q = self.vector_rep_tf_idf(query, model)
+        v_d = self.vector_rep_tf_idf(doc, model)
+
+        # print("=====================================" * 2)
+        # print(f"v_q : {v_q}")
+        # print(f"v_d : {v_d}")
+        # print(len(v_q) == len(v_d))
         q = set(query)
         d = set(doc)
 
         cosine_dist = cosine(v_q, v_d)
         jaccard = len(q & d) / len(q | d)
 
-        result = v_q + v_d + [jaccard] + [cosine_dist]
+        result = v_q + v_d + [jaccard] \
+                 + [cosine_dist]
         return result
 
     def prepare_data(self):
@@ -167,7 +193,8 @@ class Letor:
         return sorted_did_scores
 
     def main(self):
-        # self.lsi_model = self.create_lsi_model()
-        self.create_w2v_model()
+        # self.create_lsi_model()
+        # self.create_w2v_model()
+        self.create_tf_idf_model()
         X, Y = self.prepare_data()
         self.ranker = self.train_lambda_mart(X, Y)
