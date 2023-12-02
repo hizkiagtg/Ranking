@@ -12,10 +12,7 @@ from gensim.corpora import Dictionary
 from lightgbm import sklearn
 from scipy.spatial.distance import cosine
 import lightgbm
-import optuna
 from collections import defaultdict
-import optuna
-from optuna.integration import lightgbm as lgbm
 from sklearn.model_selection import train_test_split
 
 
@@ -134,11 +131,11 @@ class Letor:
         ranker = lightgbm.LGBMRanker(
             objective="lambdarank",
             boosting_type="gbdt",
-            n_estimators=optuna.Trial.suggest_int("n_estimators", 50, 500, 5),
+            n_estimators=100,
             importance_type="gain",
             metric="ndcg",
-            num_leaves=optuna.Trial.suggest_int("num_leaves", 10, 100),
-            learning_rate=optuna.Trial.suggest_float("learning_rate", 0.01, 0.1, 0.01),
+            num_leaves=32,
+            learning_rate=0.01,
             max_depth=-1
         )
 
@@ -154,8 +151,8 @@ class Letor:
     def re_ranking(self, query, docs):
         res = []
         for did in docs:
+            # Comment two lines below if error occured
             file_path = os.path.join(".", did)
-            # Replace \ with / for Windows
             file_path = file_path.replace("\\", "/")
             with open(file_path) as f:
                 res.append((did, f.read()))
