@@ -4,6 +4,7 @@ Created on Sun Nov 19 21:07:47 2023
 
 @author: Hizbast
 """
+import math
 import os
 import random
 import numpy as np
@@ -14,6 +15,7 @@ from scipy.spatial.distance import cosine
 import lightgbm
 from collections import defaultdict
 from sklearn.model_selection import train_test_split
+import optuna
 
 
 class Letor:
@@ -74,8 +76,6 @@ class Letor:
 
     def vector_rep(self, text, lsi_model):
         rep = [topic_value for (_, topic_value) in lsi_model[self.dictionary.doc2bow(text)]]
-        print("=====================================" * 2)
-        print(f"REP : {rep}")
         return rep if len(rep) == self.NUM_LATENT_TOPICS else [0.] * self.NUM_LATENT_TOPICS
 
     def create_tf_idf_model(self):
@@ -85,33 +85,21 @@ class Letor:
 
     def vector_rep_tf_idf(self, text, tf_idf_model):
         rep = [topic_value for (_, topic_value) in tf_idf_model[self.dictionary.doc2bow(text)]]
-        # print("=====================================" * 2)
-        # print(f"REP : {rep}")
         return rep if len(rep) == self.NUM_LATENT_TOPICS else [0.] * self.NUM_LATENT_TOPICS
 
     def create_w2v_model(self):
         all_texts = list(self.documents.values()) + list(self.queries.values())
-        model = Word2Vec(all_texts, vector_size=2000, window=6, min_count=1, workers=-1)
+        model = Word2Vec(all_texts, vector_size=4000, window=6, min_count=1, workers=-1)
         self.model = model
 
     def vector_rep_w2v(self, text, w2v_model):
         rep = [w2v_model.wv[word] for word in text if word in w2v_model.wv]
-        # print("=====================================" * 2)
-        # print(f"REP : {rep}")
         return np.mean(rep, axis=0).tolist() if len(rep) > 0 else [0.] * self.NUM_LATENT_TOPICS
 
     def features(self, query, doc, model):
-        # v_q = self.vector_rep(query, model)
-        # v_d = self.vector_rep(doc, model)
         v_q = self.vector_rep_w2v(query, model)
         v_d = self.vector_rep_w2v(doc, model)
-        # v_q = self.vector_rep_tf_idf(query, model)
-        # v_d = self.vector_rep_tf_idf(doc, model)
 
-        # print("=====================================" * 2)
-        # print(f"v_q : {v_q}")
-        # print(f"v_d : {v_d}")
-        # print(len(v_q) == len(v_d))
         q = set(query)
         d = set(doc)
 
