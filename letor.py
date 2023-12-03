@@ -91,23 +91,22 @@ class Letor:
 
     def create_w2v_model(self):
         all_texts = list(self.documents.values()) + list(self.queries.values())
-        model = Word2Vec(all_texts, vector_size=self.NUM_LATENT_TOPICS, window=5, min_count=1, workers=4)
+        model = Word2Vec(all_texts, vector_size=2000, window=6, min_count=1, workers=-1)
         self.model = model
 
     def vector_rep_w2v(self, text, w2v_model):
         rep = [w2v_model.wv[word] for word in text if word in w2v_model.wv]
         # print("=====================================" * 2)
         # print(f"REP : {rep}")
-
-        return np.array(rep).flatten()
+        return np.mean(rep, axis=0).tolist() if len(rep) > 0 else [0.] * self.NUM_LATENT_TOPICS
 
     def features(self, query, doc, model):
         # v_q = self.vector_rep(query, model)
         # v_d = self.vector_rep(doc, model)
-        # v_q = self.vector_rep_w2v(query, model)
-        # v_d = self.vector_rep_w2v(doc, model)
-        v_q = self.vector_rep_tf_idf(query, model)
-        v_d = self.vector_rep_tf_idf(doc, model)
+        v_q = self.vector_rep_w2v(query, model)
+        v_d = self.vector_rep_w2v(doc, model)
+        # v_q = self.vector_rep_tf_idf(query, model)
+        # v_d = self.vector_rep_tf_idf(doc, model)
 
         # print("=====================================" * 2)
         # print(f"v_q : {v_q}")
@@ -193,8 +192,6 @@ class Letor:
         return sorted_did_scores
 
     def main(self):
-        # self.create_lsi_model()
-        # self.create_w2v_model()
-        self.create_tf_idf_model()
+        self.create_w2v_model()
         X, Y = self.prepare_data()
         self.ranker = self.train_lambda_mart(X, Y)
