@@ -5,8 +5,7 @@ from bsbi import BSBIIndex
 from compression import VBEPostings
 from tqdm import tqdm
 from collections import defaultdict
-from letor import Letor
-
+from VectorRep import Letor
 # >>>>> 3 IR metrics: RBP p = 0.8, DCG, dan AP
 
 
@@ -158,14 +157,7 @@ def eval_retrieval(qrels, query_file="qrels-folder/test_queries.txt", k=100):
                               output_dir='index')
 
     with open(query_file) as file:
-        rbp_scores_tfidf = []
-        dcg_scores_tfidf = []
-        ap_scores_tfidf = []
-
-        rbp_scores_bm25 = []
-        dcg_scores_bm25 = []
-        ap_scores_bm25 = []
-        
+       
         rbp_scores_letor = []
         dcg_scores_letor = []
         ap_scores_letor = []
@@ -174,48 +166,17 @@ def eval_retrieval(qrels, query_file="qrels-folder/test_queries.txt", k=100):
             parts = qline.strip().split()
             qid = parts[0]
             query = " ".join(parts[1:])            
-            ranking_tfidf = []
-            ranking_bm25 = []
             ranking_letor = []
             # Using 100 document from BM25
             lst_did = []
             
-            try: 
-                """
-                Evaluasi TF-IDF
-                """
-                for (score, doc) in BSBI_instance.retrieve_tfidf(query, k=k):
-                    did = int(os.path.splitext(os.path.basename(doc))[0])
-                    if (did in qrels[qid]):
-                        ranking_tfidf.append(1)
-                    else:
-                        ranking_tfidf.append(0)  
-                        
-                rbp_scores_tfidf.append(rbp(ranking_tfidf))
-                dcg_scores_tfidf.append(dcg(ranking_tfidf))
-                ap_scores_tfidf.append(ap(ranking_tfidf))
-                
-                """
-                Evaluasi BM25
-                """
-                
-                
+            try:
                 for (score, doc) in BSBI_instance.retrieve_bm25(query, k=k, k1 = 1.2, b = 0.75):
                     lst_did.append(doc)
-                    did = int(os.path.splitext(os.path.basename(doc))[0])
-                    if (did in qrels[qid]):
-                        ranking_bm25.append(1)
-                    else:
-                        ranking_bm25.append(0)
                         
-                rbp_scores_bm25.append(rbp(ranking_bm25))
-                dcg_scores_bm25.append(dcg(ranking_bm25))
-                ap_scores_bm25.append(ap(ranking_bm25))
-                
                 """
-                Evaluasi Letor
+                Evaluasi Model
                 """
-                
                 rank = letor_instance.re_ranking(query, lst_did)
                 for (doc, score) in rank:
                     did = int(os.path.splitext(os.path.basename(doc))[0])
@@ -230,25 +191,15 @@ def eval_retrieval(qrels, query_file="qrels-folder/test_queries.txt", k=100):
 
             except:
                 continue
-            
-    print("Hasil evaluasi TF-IDF terhadap 150 queries")
-    print("RBP score =", sum(rbp_scores_tfidf) / len(rbp_scores_tfidf))
-    print("DCG score =", sum(dcg_scores_tfidf) / len(dcg_scores_tfidf))
-    print("AP score  =", sum(ap_scores_tfidf) / len(ap_scores_tfidf))
 
-    print("Hasil evaluasi BM25 terhadap 150 queries")
-    print("RBP score =", sum(rbp_scores_bm25) / len(rbp_scores_bm25))
-    print("DCG score =", sum(dcg_scores_bm25) / len(dcg_scores_bm25))
-    print("AP score  =", sum(ap_scores_bm25) / len(ap_scores_bm25))
-    
-    print("Hasil evaluasi Letor terhadap 150 queries")
+    print("Hasil evaluasi Model terhadap 150 queries")
     print("RBP score =", sum(rbp_scores_letor) / len(rbp_scores_letor))
     print("DCG score =", sum(dcg_scores_letor) / len(dcg_scores_letor))
     print("AP score  =", sum(ap_scores_letor) / len(ap_scores_letor))
 
 
 if __name__ == '__main__':
-    letor_instance = Letor("qrels-folder/train_docs.txt", "qrels-folder/train_queries.txt", "qrels-folder/train_qrels.txt")
+    letor_instance = Letor()
     letor_instance.main()
     qrels = load_qrels()
     eval_retrieval(qrels)
