@@ -40,7 +40,7 @@ class Letor:
         self.queries = self.load_queries(train_queries_file)
         self.dataset = self.create_dataset(train_qrel_file)
         self.dictionary = Dictionary()
-        self.NUM_LATENT_TOPICS = 200
+        self.NUM_LATENT_TOPICS = 400
         
 
     def load_documents(self, file_path):

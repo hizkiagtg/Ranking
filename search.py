@@ -1,6 +1,6 @@
 from bsbi import BSBIIndex
 from compression import VBEPostings
-from letor import Letor
+from bert import BERTReRanker
 
 
 # sebelumnya sudah dilakukan indexing
@@ -8,8 +8,7 @@ from letor import Letor
 BSBI_instance = BSBIIndex(data_dir='collections',
                           postings_encoding=VBEPostings,
                           output_dir='index')
-letor_instance = Letor("qrels-folder/train_docs.txt", "qrels-folder/train_queries.txt", "qrels-folder/train_qrels.txt")
-letor_instance.main()
+letor_instance = BERTReRanker()
 
 queries = ["Jumlah uang terbatas yang telah ditentukan sebelumnya bahwa seseorang harus membayar dari tabungan mereka sendiri",
            ]
@@ -33,7 +32,8 @@ print()
 for query in queries:
     print("Query  : ", query)
     print("Results (Letor):")
-    rank = letor_instance.re_ranking(query, lst_did)
+    
+    rank = letor_instance.re_rank(query, lst_did)
     for (doc, scores) in rank:
         text = f"{doc:30} {scores:>.3f}"
         print(text)

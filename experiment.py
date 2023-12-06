@@ -5,7 +5,7 @@ from bsbi import BSBIIndex
 from compression import VBEPostings
 from tqdm import tqdm
 from collections import defaultdict
-from VectorRep import Letor
+from Letor_ft import Letor
 # >>>>> 3 IR metrics: RBP p = 0.8, DCG, dan AP
 
 
